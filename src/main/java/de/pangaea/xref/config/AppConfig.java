@@ -1,5 +1,6 @@
 package de.pangaea.xref.config;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -10,13 +11,22 @@ public class AppConfig {
 
     public AppConfig() {
         properties = new Properties();
-        try (InputStream is = getClass().getClassLoader().getResourceAsStream("application.properties")) {
-            if (is == null) {
-                throw new RuntimeException("Resource not found: " + "./conf/application.properties");
-            }
-            properties.load(is);
+        InputStream is;
+        try {
+            // Try loading from external file conf/application.properties
+            is = new FileInputStream("conf/application.properties");
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load database properties", e);
+            // Fallback to classpath
+            is = getClass().getClassLoader().getResourceAsStream("application.properties");
+            if (is == null) {
+                throw new RuntimeException("Resource 'application.properties' not found in filesystem or classpath.");
+            }
+        }
+
+        try (InputStream finalIs = is) {
+            properties.load(finalIs);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load application properties", e);
         }
     }
 
